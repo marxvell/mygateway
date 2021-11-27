@@ -24,9 +24,9 @@ COPY ./src/frps.ini /frp/frps.ini
 COPY ./src/frps.conf /etc/nginx/conf.d/frps.conf
 
 #Start Nginx and frps
-COPY ./src/startup.sh /home/startup.sh \
- && chmod +x /home/startup.sh
+COPY ./src/startup.sh /frp/startup.sh \
+  && chmod +x /frp/startup.sh
 
 EXPOSE 80 7000
 
-ENTRYPOINT ["/home/startup.sh"]
+ENTRYPOINT ["/frp/startup.sh"]
