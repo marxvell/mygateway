@@ -1,10 +1,31 @@
 FROM nginx:stable-alpine
 
-RUN apk add --no-cache --virtual .build-deps curl ca-certificates \
- && curl -L -o /frp.tar.gz --insecure https://github.com/fatedier/frp/releases/download/v0.38.0/frp_0.38.0_linux_amd64.tar.gz \
- && tar -zxvf /frp.tar.gz frp_0.38.0_linux_amd64/frps \
- && mv frp_0.38.0_linux_amd64/frps /usr/bin/frps \
- && chmod +x /usr/bin/frps \
- && rm -rf /frp* frp*
-CMD ["/usr/bin/frps", "--vhost_http_port=80"]
-EXPOSE 80
+#Install frps
+WORKDIR /
+RUN set -xe && \
+ apk add tzdata && \
+ cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+ echo "Asia/Shanghai" > /etc/timezone && \
+ apk del tzdata
+RUN set -x && \
+	if [ "$(uname -m)" = "x86_64" ]; then export PLATFORM=amd64 ; else if [ "$(uname -m)" = "aarch64" ]; then export PLATFORM=arm64 ; fi fi && \
+	wget --no-check-certificate https://github.com/fatedier/frp/releases/download/v${FRP_VERSION}/frp_${FRP_VERSION}_linux_${PLATFORM}.tar.gz && \ 
+	tar xzf frp_${FRP_VERSION}_linux_${PLATFORM}.tar.gz && \
+	cd frp_${FRP_VERSION}_linux_${PLATFORM} && \
+	mkdir /frp && \
+	mv frps /frp && \
+	cd .. && \
+	rm -rf *.tar.gz frp_${FRP_VERSION}_linux_${PLATFORM}
+#Config frps
+COPY ./src/frps.ini /frp/frps.ini
+
+#Config Nginx
+COPY ./src/frps.conf /etc/nginx/conf.d/frps.conf
+
+#Start Nginx and frps
+COPY ./src/startup.sh /home/startup.sh \
+ && chmod +x /home/startup.sh
+
+EXPOSE 80 7000
+
+ENTRYPOINT ["/home/startup.sh"]
