@@ -22,6 +22,7 @@ COPY ./src/frps.ini /frp/frps.ini
 
 #Config Nginx
 COPY ./src/frps.conf /etc/nginx/conf.d/frps.conf
+COPY ./src/index.html /root/index.html
 
 EXPOSE 80 7000
 
